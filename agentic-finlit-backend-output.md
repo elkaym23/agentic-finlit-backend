@@ -3,7 +3,7 @@
 ## 📊 Project Information
 
 - **Project Name**: `agentic-finlit-backend`
-- **Generated On**: 2025-09-08 04:18:05 (Etc/GMT+5 / GMT-05:00)
+- **Generated On**: 2025-09-08 04:25:15 (Etc/GMT+5 / GMT-05:00)
 - **Total Files Processed**: 13
 - **Export Tool**: Easy Whole Project to Single Text File for LLMs v1.1.0
 - **Tool Author**: Jota / José Guilherme Pandolfi
@@ -34,7 +34,7 @@
 ├── 📄 Dockerfile (414 B)
 ├── 📄 elkay.txt
 ├── 📄 README.md (275 B)
-└── 📄 requirements.txt (332 B)
+└── 📄 requirements.txt (308 B)
 ```
 
 ## 📑 Table of Contents
@@ -64,7 +64,7 @@
 | Total Directories | 2 |
 | Text Files | 12 |
 | Binary Files | 1 |
-| Total Size | 12.33 KB |
+| Total Size | 12.31 KB |
 
 ### 📄 File Types Distribution
 
@@ -619,15 +619,15 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 ### <a id="📄-requirements-txt"></a>📄 `requirements.txt`
 
 **File Info:**
-- **Size**: 332 B
+- **Size**: 308 B
 - **Extension**: `.txt`
 - **Language**: `text`
 - **Location**: `requirements.txt`
 - **Relative Path**: `root`
 - **Created**: 2025-09-08 03:23:55 (Etc/GMT+5 / GMT-05:00)
-- **Modified**: 2025-09-08 04:15:04 (Etc/GMT+5 / GMT-05:00)
-- **MD5**: `ac7d677c6620260808d18ce3cc88091f`
-- **SHA256**: `b01803bb939c1c2d458e0af2a5d5e073e19249ab9279c4106ede291eb900b7ee`
+- **Modified**: 2025-09-08 04:25:15 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `fb00c8dd5f0813588dac81407db6f048`
+- **SHA256**: `26296808f788b21aa4657733feaf65a1a01fc50f1c7bfbb2f2c9760edd52b345`
 - **Encoding**: ASCII
 
 **File code content:**
@@ -636,9 +636,9 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 pydantic==2.7.4
-langgraph==0.2.25
-langchain==0.2.12
-langchain-community==0.2.12
+langgraph
+langchain
+langchain-community
 huggingface_hub==0.24.5
 transformers==4.43.3
 sentence-transformers==3.0.1
