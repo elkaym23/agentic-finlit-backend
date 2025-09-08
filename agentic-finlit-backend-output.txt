@@ -5,7 +5,7 @@ PROJECT EXPORT FOR LLMs
 PROJECT INFORMATION:
 --------------------------------------------------
 Project Name: agentic-finlit-backend
-Generated On: 2025-09-08 04:25:15 (Etc/GMT+5 / GMT-05:00)
+Generated On: 2025-09-08 05:33:59 (Etc/GMT+5 / GMT-05:00)
 Total Files Processed: 13
 Export Tool: Easy Whole Project to Single Text File for LLMs v1.1.0
 Tool Author: Jota / José Guilherme Pandolfi
@@ -31,12 +31,12 @@ PROJECT STRUCTURE
 │   ├── 📄 embeddings.py (578 B)
 │   ├── 📄 hf_client.py (878 B)
 │   ├── 📄 ingest.py (845 B)
-│   ├── 📄 main.py (2 KB)
+│   ├── 📄 main.py (2.25 KB)
 │   └── 📄 README.md (107 B)
-├── 📄 Dockerfile (414 B)
+├── 📄 Dockerfile (632 B)
 ├── 📄 elkay.txt
 ├── 📄 README.md (275 B)
-└── 📄 requirements.txt (308 B)
+└── 📄 requirements.txt (332 B)
 
 ================================================================================
 PROJECT STATISTICS
@@ -45,7 +45,7 @@ Total Files: 13
 Total Directories: 2
 Text Files: 12
 Binary Files: 1
-Total Size: 12.31 KB
+Total Size: 12.8 KB
 
 FILE TYPES DISTRIBUTION:
 ------------------------------
@@ -450,24 +450,32 @@ FILE: app/main.py
 
 FILE INFORMATION:
 ----------------------------------------
-Size: 2 KB
+Size: 2.25 KB
 Extension: .py
 Language: python
 Location: app/main.py
 Relative Path: app
 Created: 2025-09-08 03:31:10 (Etc/GMT+5 / GMT-05:00)
-Modified: 2025-09-08 04:18:04 (Etc/GMT+5 / GMT-05:00)
-MD5: fd76b660208e70d5fb2d2959f93ff43f
-SHA256: 5ff12b69513e21ec1a9984aa0f78fa0e9c0c36bc89003d110371392734342d2e
+Modified: 2025-09-08 05:33:58 (Etc/GMT+5 / GMT-05:00)
+MD5: 8303a8d4c5e8e664e4ff8962623fec51
+SHA256: c8cc9a31cf9c6ff78196de5648108fd37bad8c36995ab41310b46c90b68bb238
 Encoding: ASCII
 
 FILE CONTENT:
 ----------------------------------------
-from fastapi import FastAPI
 from pydantic import BaseModel
 from .agents.schemas import AgentState
 from .agents.graph import build_graph
 from .ingest import ingest_lesson
+
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"ok": True, "service": "agentic-finlit-backend"}
 
 api = FastAPI(title="Agentic FinLit Backend")
 _graph = build_graph()
@@ -523,6 +531,9 @@ def agent_next(payload: SubmitQuiz):
         data["game_slug"] = "money_match"
     return data
 
+if __name__ == "__main__":
+    import os, uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.getenv("PORT", "7860")))
 ================================================================================
 
 
@@ -615,15 +626,15 @@ FILE: requirements.txt
 
 FILE INFORMATION:
 ----------------------------------------
-Size: 308 B
+Size: 332 B
 Extension: .txt
 Language: text
 Location: requirements.txt
 Relative Path: root
 Created: 2025-09-08 03:23:55 (Etc/GMT+5 / GMT-05:00)
-Modified: 2025-09-08 04:25:15 (Etc/GMT+5 / GMT-05:00)
-MD5: fb00c8dd5f0813588dac81407db6f048
-SHA256: 26296808f788b21aa4657733feaf65a1a01fc50f1c7bfbb2f2c9760edd52b345
+Modified: 2025-09-08 05:23:44 (Etc/GMT+5 / GMT-05:00)
+MD5: 011711e3a3a8373749286cd4918b9079
+SHA256: 6d05e356cd5b401fee707c7613b7b1b0623ef3d160ae0d54fdd43b1442bb69e8
 Encoding: ASCII
 
 FILE CONTENT:
@@ -644,6 +655,7 @@ PyMySQL==1.1.1
 python-dotenv==1.0.1
 tenacity>=8.2.3
 certifi>=2024.6.2
+mysql-connector-python
 
 ================================================================================
 
