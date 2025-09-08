@@ -3,8 +3,8 @@
 ## 📊 Project Information
 
 - **Project Name**: `agentic-finlit-backend`
-- **Generated On**: 2025-09-08 03:52:41 (Etc/GMT+5 / GMT-05:00)
-- **Total Files Processed**: 6
+- **Generated On**: 2025-09-08 04:18:05 (Etc/GMT+5 / GMT-05:00)
+- **Total Files Processed**: 13
 - **Export Tool**: Easy Whole Project to Single Text File for LLMs v1.1.0
 - **Tool Author**: Jota / José Guilherme Pandolfi
 
@@ -21,18 +21,33 @@
 
 ```
 ├── 📁 app/
-│   ├── 📄 main.py (180 B)
+│   ├── 📁 agents/
+│   │   ├── 📄 graph.py (587 B)
+│   │   ├── 📄 nodes.py (3.37 KB)
+│   │   └── 📄 schemas.py (635 B)
+│   ├── 📄 db.py (2.42 KB)
+│   ├── 📄 embeddings.py (578 B)
+│   ├── 📄 hf_client.py (878 B)
+│   ├── 📄 ingest.py (845 B)
+│   ├── 📄 main.py (2 KB)
 │   └── 📄 README.md (107 B)
-├── 📄 Dockerfile (228 B)
+├── 📄 Dockerfile (414 B)
 ├── 📄 elkay.txt
 ├── 📄 README.md (275 B)
-└── 📄 requirements.txt (45 B)
+└── 📄 requirements.txt (332 B)
 ```
 
 ## 📑 Table of Contents
 
 **Project Files:**
 
+- [📄 app/agents/graph.py](#📄-app-agents-graph-py)
+- [📄 app/agents/nodes.py](#📄-app-agents-nodes-py)
+- [📄 app/agents/schemas.py](#📄-app-agents-schemas-py)
+- [📄 app/db.py](#📄-app-db-py)
+- [📄 app/embeddings.py](#📄-app-embeddings-py)
+- [📄 app/hf_client.py](#📄-app-hf-client-py)
+- [📄 app/ingest.py](#📄-app-ingest-py)
 - [📄 app/main.py](#📄-app-main-py)
 - [📄 app/README.md](#📄-app-readme-md)
 - [📄 elkay.txt](#📄-elkay-txt)
@@ -45,47 +60,477 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Files | 6 |
-| Total Directories | 1 |
-| Text Files | 5 |
+| Total Files | 13 |
+| Total Directories | 2 |
+| Text Files | 12 |
 | Binary Files | 1 |
-| Total Size | 835 B |
+| Total Size | 12.33 KB |
 
 ### 📄 File Types Distribution
 
 | Extension | Count |
 |-----------|-------|
+| `.py` | 8 |
 | `.md` | 2 |
 | `.txt` | 2 |
-| `.py` | 1 |
 | `no extension` | 1 |
 
 ## 💻 File Code Contents
 
+### <a id="📄-app-agents-graph-py"></a>📄 `app/agents/graph.py`
+
+**File Info:**
+- **Size**: 587 B
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/agents/graph.py`
+- **Relative Path**: `app/agents`
+- **Created**: 2025-09-08 04:12:32 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:17:38 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `735d927b01adbfd0b8c5610c79c969b4`
+- **SHA256**: `03d201ead8af915d8c6e8e4f67b6ec2429afc4e18917e4ced45f6b5dc5c6b20b`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+from langgraph.graph import StateGraph, END
+from .schemas import AgentState
+from .nodes import node_rag, node_quiz, node_grade, node_coach_or_celebrate
+
+def build_graph():
+    g = StateGraph(AgentState)
+    g.add_node("rag", node_rag)
+    g.add_node("quiz", node_quiz)
+    g.add_node("grade", node_grade)
+    g.add_node("coach_or_celebrate", node_coach_or_celebrate)
+
+    g.set_entry_point("rag")
+    g.add_edge("rag", "quiz")
+    g.add_edge("quiz", "grade")
+    g.add_edge("grade", "coach_or_celebrate")
+    g.add_edge("coach_or_celebrate", END)
+    return g.compile()
+
+```
+
+---
+
+### <a id="📄-app-agents-nodes-py"></a>📄 `app/agents/nodes.py`
+
+**File Info:**
+- **Size**: 3.37 KB
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/agents/nodes.py`
+- **Relative Path**: `app/agents`
+- **Created**: 2025-09-08 04:12:41 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:17:35 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `01bf9b0ed40637415e3d43eb3c018d43`
+- **SHA256**: `c8f802e7ee48fe46e70bceef868091fd83123225c166ce72050b7aa3ea1f4f3f`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+from .schemas import AgentState
+from ..db import search_chunks, record_submission
+from ..embeddings import embed_query
+from ..hf_client import chat
+
+def node_rag(state: AgentState) -> AgentState:
+    qvec = embed_query("Key points of this lesson for a Jamaican primary student.")
+    hits = search_chunks(state.lesson_id, state.level_slug, qvec, k=6)
+    state.context_chunks = [h["content"] for h in hits]
+    # Summarize context for the student
+    sys = {"role":"system","content":"You are a Jamaican primary school tutor. Keep it simple and friendly."}
+    usr = {"role":"user","content": "Summarize these notes in 5 short bullet points:\n" + "\n\n".join(state.context_chunks)}
+    state.context_summary = chat([sys, usr], max_new_tokens=180)
+    return state
+
+def node_quiz(state: AgentState) -> AgentState:
+    sys = {"role":"system","content":"You are a Jamaican primary school teacher. Make kid-friendly multiple-choice questions (A-D) from the provided notes."}
+    usr = {"role":"user","content": "Create 5 MCQs. JSON only: {\"items\":[{\"question\":\"...\",\"options\":[\"A\",\"B\",\"C\",\"D\"],\"answer_key\":\"A\"}...]}\nNotes:\n" + "\n\n".join(state.context_chunks)}
+    raw = chat([sys, usr], max_new_tokens=350)
+    import json
+    data = {}
+    try: data = json.loads(raw)
+    except: data = {"items":[]}
+    items = data.get("items", [])[:7]  # 4–7 in your spec
+    # Normalize
+    fixed = []
+    for it in items:
+        q = it.get("question","").strip()
+        opts = it.get("options", [])[:4]
+        while len(opts)<4: opts.append("Option")
+        key = str(it.get("answer_key","A")).strip()[:1].upper()
+        if key not in "ABCD": key="A"
+        if q: fixed.append({"question":q, "options":opts, "answer_key":key, "points":1})
+    state.quiz_items = fixed
+    return state
+
+def node_grade(state: AgentState) -> AgentState:
+    # simple grading
+    answers = state.student_answers
+    score, total, details = 0, len(state.quiz_items), []
+    for i,(it,ans) in enumerate(zip(state.quiz_items, answers)):
+        correct = (ans.upper()==it["answer_key"])
+        if correct: score += 1
+        details.append({"qno":i+1,"user":ans,"key":it["answer_key"],"correct":correct})
+    state.score, state.total = score, total
+    # record
+    if state.assignment_id is None:
+        state.assignment_id = 0  # if not assigned formally
+    record_submission(state.student_id, quiz_id=0, assignment_id=state.assignment_id,
+                      score=score, total=total, details={"items":details})
+    return state
+
+def node_coach_or_celebrate(state: AgentState) -> AgentState:
+    if state.score == state.total and state.total is not None and state.total>0:
+        state.route = "celebrate"
+        return state
+    # Coach for wrong answers
+    wrong = []
+    for it,ans in zip(state.quiz_items, state.student_answers):
+        if ans.upper()!=it["answer_key"]:
+            wrong.append({"q":it["question"],"your":ans,"key":it["answer_key"]})
+    sys = {"role":"system","content":"You are a kind tutor. Explain simply where the student went wrong."}
+    usr = {"role":"user","content": "Here are the mistakes:\n" + "\n".join([f"Q: {w['q']}\nYour answer: {w['your']}\nCorrect: {w['key']}" for w in wrong]) +
+           "\nGive short, friendly explanations for each."}
+    state.feedback = chat([sys,usr], max_new_tokens=220)
+    state.route = "coach"
+    return state
+
+```
+
+---
+
+### <a id="📄-app-agents-schemas-py"></a>📄 `app/agents/schemas.py`
+
+**File Info:**
+- **Size**: 635 B
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/agents/schemas.py`
+- **Relative Path**: `app/agents`
+- **Created**: 2025-09-08 04:12:49 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:17:22 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `dac902c3eb896d04310351176160f366`
+- **SHA256**: `cb7ead4c236783c3a14ef7d2d1c056c05a9bd697ecb6cac1b2530f4c9ffd0b06`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+from pydantic import BaseModel
+from typing import List, Optional, Dict
+
+class AgentState(BaseModel):
+    student_id: int
+    lesson_id: int
+    level_slug: str
+    assignment_id: Optional[int] = None
+
+    # RAG results
+    context_chunks: List[str] = []
+    context_summary: Optional[str] = None
+
+    # Quiz
+    quiz_items: List[Dict] = []      # [{question, options, answer_key}]
+    student_answers: List[str] = []  # ["A","C","B",...]
+
+    # Grading
+    score: Optional[int] = None
+    total: Optional[int] = None
+    feedback: Optional[str] = None
+    route: Optional[str] = None      # "coach" | "celebrate"
+
+```
+
+---
+
+### <a id="📄-app-db-py"></a>📄 `app/db.py`
+
+**File Info:**
+- **Size**: 2.42 KB
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/db.py`
+- **Relative Path**: `app`
+- **Created**: 2025-09-08 04:13:43 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:15:58 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `440b87351565d5f653f0e6e376792e02`
+- **SHA256**: `475786af3e718b10ec96e2b9838c26f452b18fdfb85b5760ede98537347a9231`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+import os
+import json
+import numpy as np
+import pymysql
+from contextlib import contextmanager
+
+TIDB_HOST = os.getenv("TIDB_HOST")
+TIDB_PORT = int(os.getenv("TIDB_PORT", "4000"))
+TIDB_USER = os.getenv("TIDB_USER")
+TIDB_PASSWORD = os.getenv("TIDB_PASSWORD")
+TIDB_DB = os.getenv("TIDB_DB", "agenticfinance")
+
+@contextmanager
+def get_conn():
+    conn = pymysql.connect(
+        host=TIDB_HOST, port=TIDB_PORT, user=TIDB_USER, password=TIDB_PASSWORD,
+        db=TIDB_DB, ssl={"ssl": {}}  # HF -> TiDB usually needs SSL; adjust certs if needed
+    )
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+def upsert_chunk(lesson_id:int, level_slug:str, position:int, content:str, embedding:np.ndarray, meta:dict=None):
+    # Ensure float32 and correct dim 384
+    emb = embedding.astype(np.float32).tobytes()
+    meta_json = json.dumps(meta or {})
+    sql = """
+    INSERT INTO lesson_chunks (lesson_id, level_slug, position, content, embedding, meta)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE content=VALUES(content), embedding=VALUES(embedding), meta=VALUES(meta)
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (lesson_id, level_slug, position, content, emb, meta_json))
+        conn.commit()
+
+def search_chunks(lesson_id:int, level_slug:str, query_vec:np.ndarray, k:int=6):
+    emb = query_vec.astype(np.float32).tobytes()
+    sql = """
+    SELECT chunk_id, position, content,
+           L2_DISTANCE(embedding, %s) AS score
+    FROM lesson_chunks
+    WHERE lesson_id = %s AND level_slug = %s
+    ORDER BY score ASC
+    LIMIT %s
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (emb, lesson_id, level_slug, k))
+            rows = cur.fetchall()
+    return [{"chunk_id":r[0], "position":r[1], "content":r[2], "score":float(r[3])} for r in rows]
+
+def record_submission(student_id:int, quiz_id:int, assignment_id:int, score:int, total:int, details:dict):
+    sql = """
+    INSERT INTO submissions (assignment_id, quiz_id, student_id, score, total, details)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE score=VALUES(score), total=VALUES(total), details=VALUES(details)
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (assignment_id, quiz_id, student_id, score, total, json.dumps(details)))
+        conn.commit()
+
+```
+
+---
+
+### <a id="📄-app-embeddings-py"></a>📄 `app/embeddings.py`
+
+**File Info:**
+- **Size**: 578 B
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/embeddings.py`
+- **Relative Path**: `app`
+- **Created**: 2025-09-08 04:14:23 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:16:04 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `7e53fe2ab8554a433f32c003df90bfd5`
+- **SHA256**: `aa33656d4aa53b053d9ad4ea93d19dc2629a1f6465032269c973371abf924a1d`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+import os
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+EMBED_MODEL = os.getenv("EMBED_MODEL", "intfloat/e5-small-v2")
+_embedder = SentenceTransformer(EMBED_MODEL)
+
+def embed_texts(texts:list[str]) -> list[np.ndarray]:
+    # e5 expects "query: ..." and "passage: ..." for some modes; standard encode works fine here
+    embs = _embedder.encode(texts, normalize_embeddings=False, convert_to_numpy=True)
+    return [np.asarray(e, dtype="float32") for e in embs]
+
+def embed_query(text:str) -> np.ndarray:
+    return embed_texts([text])[0]
+
+```
+
+---
+
+### <a id="📄-app-hf-client-py"></a>📄 `app/hf_client.py`
+
+**File Info:**
+- **Size**: 878 B
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/hf_client.py`
+- **Relative Path**: `app`
+- **Created**: 2025-09-08 04:14:02 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:16:16 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `fe43cf358feba055271d515f9585e534`
+- **SHA256**: `8fbc1f38572734191b04d92a391698a92d2689472fae33731a8b1d6c8bf05c4a`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+import os
+from huggingface_hub import InferenceClient
+
+GEN_MODEL = os.getenv("GEN_MODEL", "mistralai/Mistral-7B-Instruct-v0.2")
+HF_TOKEN = os.getenv("HF_TOKEN")
+_client = InferenceClient(model=GEN_MODEL, token=HF_TOKEN)
+
+def chat(messages:list[dict], max_new_tokens=256, temperature=0.2) -> str:
+    """
+    messages: [{"role":"system/user/assistant","content":"..."}]
+    returns string
+    """
+    # Simple conversion to a single prompt; many instruct models handle one turn well.
+    system = "\n".join([m["content"] for m in messages if m["role"]=="system"])
+    convo  = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in messages if m["role"]!="system"])
+    prompt = (system + "\n\n" + convo + "\nASSISTANT:").strip()
+    out = _client.text_generation(prompt, max_new_tokens=max_new_tokens, temperature=temperature, stream=False)
+    return out
+
+```
+
+---
+
+### <a id="📄-app-ingest-py"></a>📄 `app/ingest.py`
+
+**File Info:**
+- **Size**: 845 B
+- **Extension**: `.py`
+- **Language**: `python`
+- **Location**: `app/ingest.py`
+- **Relative Path**: `app`
+- **Created**: 2025-09-08 04:13:55 (Etc/GMT+5 / GMT-05:00)
+- **Modified**: 2025-09-08 04:16:31 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `0d0205712c107ab440f1c85243cd4d41`
+- **SHA256**: `22434c64663141edf3e31e595b9939e657193a8813229011f8acfd9375b1f851`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```python
+import re
+from typing import Iterable
+from .embeddings import embed_texts
+from .db import upsert_chunk
+
+def _simple_chunk(text:str, target_len:int=700) -> list[str]:
+    # naive splitter by paragraphs into ~700 char chunks
+    paras = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
+    chunks, buf = [], ""
+    for p in paras:
+        if len(buf)+len(p) < target_len:
+            buf = (buf + "\n\n" + p).strip()
+        else:
+            if buf: chunks.append(buf)
+            buf = p
+    if buf: chunks.append(buf)
+    return chunks
+
+def ingest_lesson(lesson_id:int, level_slug:str, raw_text:str):
+    chunks = _simple_chunk(raw_text)
+    embs   = embed_texts(chunks)
+    for i, (c,e) in enumerate(zip(chunks, embs), start=1):
+        upsert_chunk(lesson_id, level_slug, i, c, e, meta={"source": "preset"})
+
+```
+
+---
+
 ### <a id="📄-app-main-py"></a>📄 `app/main.py`
 
 **File Info:**
-- **Size**: 180 B
+- **Size**: 2 KB
 - **Extension**: `.py`
 - **Language**: `python`
 - **Location**: `app/main.py`
 - **Relative Path**: `app`
 - **Created**: 2025-09-08 03:31:10 (Etc/GMT+5 / GMT-05:00)
-- **Modified**: 2025-09-08 03:31:10 (Etc/GMT+5 / GMT-05:00)
-- **MD5**: `7ab713ad1423dcc3b60a557f8a8dfc2f`
-- **SHA256**: `b5ef7c4b10661a2978bfb99c0f72ba60b109ffa0ac958a491083294cde6c463a`
+- **Modified**: 2025-09-08 04:18:04 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `fd76b660208e70d5fb2d2959f93ff43f`
+- **SHA256**: `5ff12b69513e21ec1a9984aa0f78fa0e9c0c36bc89003d110371392734342d2e`
 - **Encoding**: ASCII
 
 **File code content:**
 
 ```python
 from fastapi import FastAPI
+from pydantic import BaseModel
+from .agents.schemas import AgentState
+from .agents.graph import build_graph
+from .ingest import ingest_lesson
 
-api = FastAPI(title="Agentic FinLit Backend (Starter)")
+api = FastAPI(title="Agentic FinLit Backend")
+_graph = build_graph()
 
-@api.get("/")
-def root():
-    return {"ok": True, "service": "agentic-finlit-backend"}
+class StartRun(BaseModel):
+    student_id: int
+    lesson_id: int
+    level_slug: str
+
+class SubmitQuiz(BaseModel):
+    student_id: int
+    lesson_id: int
+    level_slug: str
+    answers: list[str]
+    assignment_id: int | None = None
+
+@api.post("/ingest")
+def ingest(lesson_id:int, level_slug:str, raw_text:str):
+    ingest_lesson(lesson_id, level_slug, raw_text)
+    return {"ok": True}
+
+@api.post("/agent/start")
+def agent_start(payload: StartRun):
+    state = AgentState(**payload.model_dump())
+    out = _graph.invoke(state, start_at="rag")
+    return {"summary": out.context_summary, "ok": True}
+
+@api.post("/agent/quiz")
+def agent_quiz(payload: StartRun):
+    state = AgentState(**payload.model_dump())
+    out = _graph.invoke(state, start_at="quiz")
+    return {"items": out.quiz_items}
+
+@api.post("/agent/grade")
+def agent_grade(payload: SubmitQuiz):
+    st = AgentState(student_id=payload.student_id, lesson_id=payload.lesson_id,
+                    level_slug=payload.level_slug, assignment_id=payload.assignment_id)
+    st.student_answers = payload.answers
+    out = _graph.invoke(st, start_at="grade")
+    return {"score": out.score, "total": out.total}
+
+@api.post("/agent/coach_or_celebrate")
+def agent_next(payload: SubmitQuiz):
+    st = AgentState(student_id=payload.student_id, lesson_id=payload.lesson_id,
+                    level_slug=payload.level_slug, assignment_id=payload.assignment_id)
+    st.student_answers = payload.answers
+    out = _graph.invoke(st, start_at="coach_or_celebrate")
+    data = {"route": out.route}
+    if out.route == "coach":
+        data["feedback"] = out.feedback
+    else:
+        data["message"] = "Great job! Want to play Money Match?"
+        data["game_slug"] = "money_match"
+    return data
 
 ```
 
@@ -174,15 +619,15 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 ### <a id="📄-requirements-txt"></a>📄 `requirements.txt`
 
 **File Info:**
-- **Size**: 45 B
+- **Size**: 332 B
 - **Extension**: `.txt`
 - **Language**: `text`
 - **Location**: `requirements.txt`
 - **Relative Path**: `root`
 - **Created**: 2025-09-08 03:23:55 (Etc/GMT+5 / GMT-05:00)
-- **Modified**: 2025-09-08 03:31:10 (Etc/GMT+5 / GMT-05:00)
-- **MD5**: `a29c654efdcaced933646b542a898012`
-- **SHA256**: `bce0d135c35acc8fabbb855872efbc54e36101ae28ac738d22d55fbb6a7022c3`
+- **Modified**: 2025-09-08 04:15:04 (Etc/GMT+5 / GMT-05:00)
+- **MD5**: `ac7d677c6620260808d18ce3cc88091f`
+- **SHA256**: `b01803bb939c1c2d458e0af2a5d5e073e19249ab9279c4106ede291eb900b7ee`
 - **Encoding**: ASCII
 
 **File code content:**
@@ -190,6 +635,20 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 ```text
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
+pydantic==2.7.4
+langgraph==0.2.25
+langchain==0.2.12
+langchain-community==0.2.12
+huggingface_hub==0.24.5
+transformers==4.43.3
+sentence-transformers==3.0.1
+numpy>=1.26
+scikit-learn>=1.4
+SQLAlchemy==2.0.31
+PyMySQL==1.1.1
+python-dotenv==1.0.1
+tenacity>=8.2.3
+certifi>=2024.6.2
 
 ```
 
