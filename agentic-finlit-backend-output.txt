@@ -1,0 +1,135 @@
+====================================================================================================
+PROJECT EXPORT FOR LLMs
+====================================================================================================
+
+PROJECT INFORMATION:
+--------------------------------------------------
+Project Name: agentic-finlit-backend
+Generated On: 2025-09-08 03:25:38 (Etc/GMT+5 / GMT-05:00)
+Total Files Processed: 4
+Export Tool: Easy Whole Project to Single Text File for LLMs v1.1.0
+Tool Author: Jota / José Guilherme Pandolfi
+
+EXPORT CONFIGURATION:
+--------------------------------------------------
+Language: en
+Max File Size: 1 MB
+Include Hidden Files: false
+Output Format: both
+Notification Level: minimal
+Custom File Name Pattern: {workspaceName}-output
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+├── 📁 app/
+│   ├── 📄 main.py (180 B)
+│   └── 📄 README.md (107 B)
+├── 📄 Dockerfile (228 B)
+└── 📄 requirements.txt (45 B)
+
+================================================================================
+PROJECT STATISTICS
+================================================================================
+Total Files: 4
+Total Directories: 1
+Text Files: 3
+Binary Files: 1
+Total Size: 560 B
+
+FILE TYPES DISTRIBUTION:
+------------------------------
+.py             : 1
+.md             : 1
+no extension    : 1
+.txt            : 1
+
+================================================================================
+FILE CODE CONTENTS
+================================================================================
+
+
+================================================================================
+FILE: app/main.py
+================================================================================
+
+FILE INFORMATION:
+----------------------------------------
+Size: 180 B
+Extension: .py
+Language: python
+Location: app/main.py
+Relative Path: app
+Created: 2025-09-08 03:25:03 (Etc/GMT+5 / GMT-05:00)
+Modified: 2025-09-08 03:25:14 (Etc/GMT+5 / GMT-05:00)
+MD5: 7ab713ad1423dcc3b60a557f8a8dfc2f
+SHA256: b5ef7c4b10661a2978bfb99c0f72ba60b109ffa0ac958a491083294cde6c463a
+Encoding: ASCII
+
+FILE CONTENT:
+----------------------------------------
+from fastapi import FastAPI
+
+api = FastAPI(title="Agentic FinLit Backend (Starter)")
+
+@api.get("/")
+def root():
+    return {"ok": True, "service": "agentic-finlit-backend"}
+
+================================================================================
+
+
+================================================================================
+FILE: app/README.md
+================================================================================
+
+FILE INFORMATION:
+----------------------------------------
+Size: 107 B
+Extension: .md
+Language: text
+Location: app/README.md
+Relative Path: app
+Created: 2025-09-08 03:25:31 (Etc/GMT+5 / GMT-05:00)
+Modified: 2025-09-08 03:25:37 (Etc/GMT+5 / GMT-05:00)
+MD5: bbd494783866d77eb7a8f3c890e23488
+SHA256: d258a946b44e462be9c71fcc99bb0b2116018423033dcd3fbc30c07d875694f6
+Encoding: ASCII
+
+FILE CONTENT:
+----------------------------------------
+# Agentic FinLit Backend (Starter)
+FastAPI service for the agentic flow. Deployed on HF Spaces (Docker).
+
+================================================================================
+
+
+================================================================================
+FILE: requirements.txt
+================================================================================
+
+FILE INFORMATION:
+----------------------------------------
+Size: 45 B
+Extension: .txt
+Language: text
+Location: requirements.txt
+Relative Path: root
+Created: 2025-09-08 03:23:55 (Etc/GMT+5 / GMT-05:00)
+Modified: 2025-09-08 03:24:02 (Etc/GMT+5 / GMT-05:00)
+MD5: a29c654efdcaced933646b542a898012
+SHA256: bce0d135c35acc8fabbb855872efbc54e36101ae28ac738d22d55fbb6a7022c3
+Encoding: ASCII
+
+FILE CONTENT:
+----------------------------------------
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+================================================================================
+
+
+================================================================================
+BINARY/EXCLUDED FILES (not included in text content)
+================================================================================
+- Dockerfile
